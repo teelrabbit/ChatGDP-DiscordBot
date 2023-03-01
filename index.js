@@ -43,6 +43,8 @@ console.log('connection prepared!');
 const chatHistory = {};
 
 // Check for when a message on Discord is sent
+
+// Check for when a message on Discord is sent
 client.on("messageCreate", async function (message) {
   try {
     console.log(message.content);
@@ -72,6 +74,23 @@ client.on("messageCreate", async function (message) {
 
     // Save the new response in the chat history
     chatHistory[prompt] = response;
+
+    // Save the prompt and response in DynamoDB
+    const item = {
+      prompt: prompt,
+      response: response,
+    };
+    const params = {
+      TableName: tableName,
+      Item: item,
+    };
+    documentClient.put(params, function (err, data) {
+      if (err) {
+        console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+      } else {
+        console.log("Item added:", JSON.stringify(item, null, 2));
+      }
+    });
 
     message.reply(response);
   } catch (err) {
