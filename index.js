@@ -1,8 +1,23 @@
-// check for env vars
-if (!process.env.discord_key || !process.env.org_key || !process.env.api_key) {
-  console.error("One or more environment variables are missing.");
-  process.exit(0);
+// Load the AWS SDK for JavaScript
+console.log('AWS-SDK Prepapring to instakll');
+const AWS = require("aws-sdk");
+
+// Check for required environment variables
+if (!process.env.discord_key || !process.env.org_key || !process.env.api_key || !process.env.aws_access_key_id || !process.env.aws_secret_access_key) {
+  throw new Error("One or more environment variables are missing.");
 }
+
+// Configure the SDK with your AWS credentials
+AWS.config.update({
+  region: "us-west-1",
+  accessKeyId: process.env.aws_access_key_id,
+  secretAccessKey: process.env.aws_secret_access_key,
+});
+// https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/dynamodb-example-table-read-write.html
+// Test the connection to DynamoDB
+const documentClient = new AWS.DynamoDB.DocumentClient();
+const tableName = "GPT-Response-DB";
+console.log('connection prepared!');
 
 // Prepare to connect to the Discord API
 const { Client, GatewayIntentBits } = require("discord.js");
@@ -21,23 +36,6 @@ const configuration = new Configuration({
   apiKey: process.env.api_key,
 });
 const openai = new OpenAIApi(configuration);
-
-//changes here ---------------------------------------------------------------
-// Load the AWS SDK for JavaScript
-console.log('AWS-SDK Prepapring to instakll');
-const AWS = require("aws-sdk");
-
-// Configure the SDK with your AWS credentials
-AWS.config.update({
-  region: "us-west-1",
-  accessKeyId: process.env.aws_access_key_id,
-  secretAccessKey: process.env.aws_secret_access_key,
-});
-
-// Test the connection to DynamoDB
-const documentClient = new AWS.DynamoDB.DocumentClient();
-const tableName = "GPT-Response-DB";
-console.log('connection prepared!');
 
 // Object to store chat history
 const chatHistory = {};
@@ -79,7 +77,9 @@ client.on("messageCreate", async function (message) {
     message.reply("There was an error processing your request.");
   }
 });
+
 console.log('testenv');
+
 // Log the bot onto Discord
 client
   .login(process.env.discord_key)
